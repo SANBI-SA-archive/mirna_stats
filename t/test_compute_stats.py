@@ -54,4 +54,4 @@ def test_compute_stats(create_target_file, create_miranda_file):
     assert TN == 1
     assert FN == 2
     assert sensitivity == 0
-    assert specificity == 0.5
+    assert specificity == 50.0
