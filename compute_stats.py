@@ -29,8 +29,8 @@ def compute_stats(known_targets, predicted_targets, predicted_nontargets):
         FN += len(FN_set)
         TN += len(TN_set)
         print "for mirna: {} TP: {} FP: {} TN: {} FN: {}".format(mirna_name, len(TP_set), len(FP_set), len(TN_set), len(FN_set))
-    sensitivity = float(TP) / (TP + FN)
-    specificity = float(TN) / (TN + FP)
+    sensitivity = float(TP) / (TP + FN) * 100.0
+    specificity = float(TN) / (TN + FP) * 100.0
     return (TP, FP, TN, FN, sensitivity, specificity)
 
 def find_known_targets(input_file):
@@ -116,4 +116,4 @@ if __name__ == '__main__':
                                                                      max_energy=args.max_energy)
     (TP, FP, TN, FN, sensitivity, specificity) = compute_stats(known_targets, predicted_targets, predicted_nontargets)
 
-    print "Total TP: {} FP: {} TN: {} FN: {} sensitivity: {} specificity: {}".format(TP, FP, TN, FN, sensitivity, specificity)
+    print "Total TP: {} FP: {} TN: {} FN: {} sensitivity: {:.2f} specificity: {:.2f}".format(TP, FP, TN, FN, sensitivity, specificity)

@@ -45,6 +45,22 @@ def test_find_miranda_targets(create_miranda_file):
     assert 'ENSG00000159216' in predicted_targets['hsa-miR-16-5p']
     assert 'hsa-miR-16-5p' in predicted_non_targets and 'hsa-miR-24-3p' in predicted_non_targets
 
+def test_find_rnahybrid_targets(create_rnahybrid_file):
+    (predicted_targets, predicted_non_targets) = compute_stats.find_rnahybrid_targets(create_rnahybrid_file)
+    assert len(predicted_targets) == 1
+    assert len(predicted_non_targets) == 2
+    assert 'hsa-miR-16-5p' in predicted_targets
+    assert 'ENSG00000159216' in predicted_targets['hsa-miR-16-5p']
+    assert 'hsa-miR-16-5p' in predicted_non_targets and 'hsa-miR-24-3p' in predicted_non_targets
+
+def test_find_microtar_targets(create_microtar_file):
+    (predicted_targets, predicted_non_targets) = compute_stats.find_rnahybrid_targets(create_microtar_file)
+    assert len(predicted_targets) == 1
+    assert len(predicted_non_targets) == 2
+    assert 'hsa-miR-16-5p' in predicted_targets
+    assert 'ENSG00000159216' in predicted_targets['hsa-miR-16-5p']
+    assert 'hsa-miR-16-5p' in predicted_non_targets and 'hsa-miR-24-3p' in predicted_non_targets
+
 def test_compute_stats(create_target_file, create_miranda_file):
     known_targets = compute_stats.find_known_targets(create_target_file)
     (predicted_targets, predicted_non_targets) = compute_stats.find_miranda_targets(create_miranda_file)
@@ -54,4 +70,4 @@ def test_compute_stats(create_target_file, create_miranda_file):
     assert TN == 1
     assert FN == 2
     assert sensitivity == 0
-    assert specificity == 0.5
+    assert specificity == 50.0
