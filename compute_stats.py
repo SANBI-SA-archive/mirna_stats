@@ -99,20 +99,21 @@ def find_miranda_targets(input_file, min_score=145.0, max_energy=-10.0):
     #        print "MATCH:", mirna_name, target_hit
     return (predicted_targets, predicted_nontargets)
 
-parser = argparse.ArgumentParser(description='Parser TP/FP stats')
-parser.add_argument('--max_energy', type=float, default=-10.0)
-parser.add_argument('--min_score', type=float, default=145.0)
-#parser.add_argument('--max_score', type=float, default=175.0)
-parser.add_argument('known_targets', type=argparse.FileType(), help='Annotated known targets')
-parser.add_argument('miranda_output', type=argparse.FileType(), help='Miranda predictions')
-parser.add_argument('output_file', type=argparse.FileType('w'), nargs='?', default=sys.stdout, help='Output file')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Parser TP/FP stats')
+    parser.add_argument('--max_energy', type=float, default=-10.0)
+    parser.add_argument('--min_score', type=float, default=145.0)
+    #parser.add_argument('--max_score', type=float, default=175.0)
+    parser.add_argument('known_targets', type=argparse.FileType(), help='Annotated known targets')
+    parser.add_argument('miranda_output', type=argparse.FileType(), help='Miranda predictions')
+    parser.add_argument('output_file', type=argparse.FileType('w'), nargs='?', default=sys.stdout, help='Output file')
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-known_targets = find_known_targets(args.known_targets)
-# miranda
-(predicted_targets, predicted_nontargets) = find_miranda_targets(args.miranda_output, min_score=args.min_score,
-                                                                 max_energy=args.max_energy)
-(TP, FP, TN, FN, sensitivity, specificity) = compute_stats(known_targets, predicted_targets, predicted_nontargets)
+    known_targets = find_known_targets(args.known_targets)
+    # miranda
+    (predicted_targets, predicted_nontargets) = find_miranda_targets(args.miranda_output, min_score=args.min_score,
+                                                                     max_energy=args.max_energy)
+    (TP, FP, TN, FN, sensitivity, specificity) = compute_stats(known_targets, predicted_targets, predicted_nontargets)
 
-print "Total TP: {} FP: {} TN: {} FN: {} sensitivity: {} specificity: {}".format(TP, FP, TN, FN, sensitivity, specificity)
+    print "Total TP: {} FP: {} TN: {} FN: {} sensitivity: {} specificity: {}".format(TP, FP, TN, FN, sensitivity, specificity)
