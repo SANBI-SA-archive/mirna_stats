@@ -60,23 +60,21 @@ for line in miranda_iter:
 #    for target_hit in predicted_targets[mirna_name]:
 #        print "MATCH:", mirna_name, target_hit
 
-result_dict = dict()
+TP = FP = FN = TN = 0
 for mirna_name in known_targets:
     known_targets_set = known_targets[mirna_name]
     predicted_nontarget_set = predicted_nontargets.get(mirna_name, set())
     predicted_targets_set = predicted_targets.get(mirna_name, set())
-    result_sets = dict(TP=known_targets_set.intersection(predicted_targets_set),
-                       FP=predicted_targets_set.difference(known_targets_set),
-                       FN=known_targets_set.difference(predicted_targets_set),
-                       TN = predicted_nontarget_set.difference(predicted_targets_set.union(known_targets_set)))
-    for key in result_sets:
-        result_dict[key] = result_dict.get(key, 0) + len(result_sets[key])
-    print "for mirna: {} TP: {} FP: {} TN: {} FN: {}".format(mirna_name, len(result_sets['TP']), len(result_sets['FP']), len(result_sets['TN']), len(result_sets['FN']))
+    TP_set = known_targets_set.intersection(predicted_targets_set)
+    FP_set = predicted_targets_set.difference(known_targets_set)
+    FN_set = known_targets_set.difference(predicted_targets_set)
+    TN_set = predicted_nontarget_set.difference(predicted_targets_set.union(known_targets_set))
+    TP += len(TP_set)
+    FP += len(FP_set)
+    FN += len(FN_set)
+    TN += len(TN_set)
+    print "for mirna: {} TP: {} FP: {} TN: {} FN: {}".format(mirna_name, len(TP_set), len(FP_set), len(TN_set), len(FN_set))
 
-TP = result_dict['TP']
-FP = result_dict['FP']
-FN = result_dict['FN']
-TN = result_dict['TN']
 sensitivity = float(TP) / (TP + FN)
 specificity = float(TN) / (TN + FP)
 print "Total TP: {} FP: {} TN: {} FN: {} sensitivity: {} specificity: {}".format(TP, FP, TN, FN, sensitivity, specificity)
