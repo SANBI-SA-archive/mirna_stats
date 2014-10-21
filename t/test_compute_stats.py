@@ -29,6 +29,17 @@ hsa-miR-24-3p   ENSG00000001617 123.000000      -17.340000      2       18      
 """
     yield create_temp_file(tmpdir, 'miranda.txt', data)
 
+@pytest.yield_fixture
+def create_rnahybrid_file(tmpdir):
+    data = """utr_id   utr_length      mirna_id        mirna_length    energy          p-value         hit_position
+ENSG00000105173 531     hsa-miR-16-5p   22      -24.8   0.019500        459
+utr_id   utr_length      mirna_id        mirna_length    energy          p-value         hit_position
+target too long  ENSG00000159216
+utr_id   utr_length      mirna_id        mirna_length    energy          p-value         hit_position
+ENSG00000001617 960     hsa-miR-24-3p   22      -29.1   0.015504        10
+"""
+    yield create_temp_file(tmpdir, 'rnahybrid.txt', data)
+
 def test_find_known_targets_file(create_target_file):
     # 
     known_targets = compute_stats.find_known_targets(create_target_file)
