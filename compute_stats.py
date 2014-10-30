@@ -4,7 +4,7 @@ import argparse
 import sys
 import re
 
-def compute_stats(known_targets, predicted_targets, predicted_nontargets):
+def compute_stats(known_targets, predicted_targets, predicted_nontargets, verbose=False):
     """Given dictionaries of known_targets and predicted targets and non-targets, compute 
     the True Positive (TP), False Positive (FP), True Negative (TN) and False Negative (FN)
     figures. These are computed for each miRNA and summed across all input miRNAs.
@@ -28,12 +28,13 @@ def compute_stats(known_targets, predicted_targets, predicted_nontargets):
         FP += len(FP_set)
         FN += len(FN_set)
         TN += len(TN_set)
-        print "for mirna: {} TP: {} FP: {} TN: {} FN: {}".format(mirna_name, len(TP_set), len(FP_set), len(TN_set), len(FN_set))
+        if verbose == True:
+            print "for mirna: {} TP: {} FP: {} TN: {} FN: {}".format(mirna_name, len(TP_set), len(FP_set), len(TN_set), len(FN_set))
     sensitivity = float(TP) / (TP + FN) * 100.0
     specificity = float(TN) / (TN + FP) * 100.0
     return (TP, FP, TN, FN, sensitivity, specificity)
 
-def find_known_targets(input_file):
+def find_known_targets(input_file, verbose=False):
     """Given a data source, find known targets and report as a dictionary keyed by miRNA name. The values of the returned
     dictionary are sets of target names.
 
@@ -53,7 +54,8 @@ def find_known_targets(input_file):
             known_targets[mirna_name] = target_hits
         else:
             # didn't get a match? let's complain but skip
-            sys.stderr.write("Found line that doesn't match: {}".format(line))
+            if verbose == True:
+                sys.stderr.write("Found line that doesn't match: {}".format(line))
     #        print "did not match"
     return known_targets
 
@@ -99,21 +101,50 @@ def find_miranda_targets(input_file, min_score=145.0, max_energy=-10.0):
     #        print "MATCH:", mirna_name, target_hit
     return (predicted_targets, predicted_nontargets)
 
+def find_rnahybrid_targets(input_file, max_p_value=0.1, max_mfe=-22.0):
+    # defaults chosen from doi:10.2390/biecoll-jib-2010-127
+    predicted_targets = dict()
+    predicted_nontargets = dict()
+    for line in input_file:
+        fields = line.rstrip().split(':')
+        gene_name = fields[0].split('|')[0]
+        mirna_name = fields[2]
+        mfe = float(fields[4])
+        p_value = float(fields[5])
+        if mfe <= max_mfe and p_value <= max_p_value:
+            targets = predicted_targets.get(mirna_name, set())
+            targets.add(gene_name)
+            predicted_targets[mirna_name] = targets
+        else:
+            targets = predicted_nontargets.get(mirna_name, set())
+            targets.add(gene_name)
+            predicted_nontargets[mirna_name] = targets
+    return (predicted_targets, predicted_nontargets)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Parser TP/FP stats')
-    parser.add_argument('--max_energy', type=float, default=-10.0)
-    parser.add_argument('--min_score', type=float, default=145.0)
+    parser.add_argument('--verbose', default=False, action="store_true", help="Verbose output")
+    parser.add_argument('--mode', choices=('rnahybrid', 'miranda', 'microtar'), required=True, help='Name of tool whose output we will parse')
+    parser.add_argument('--miranda_max_energy', type=float, default=-10.0)
+    parser.add_argument('--miranda_min_score', type=float, default=145.0)
+    parser.add_argument('--rnahybrid_max_p_value', type=float, default=0.1)
+    parser.add_argument('--rnahybrid_max_mfe', type=float, default=-22.0)
     #parser.add_argument('--max_score', type=float, default=175.0)
     parser.add_argument('known_targets', type=argparse.FileType(), help='Annotated known targets')
-    parser.add_argument('miranda_output', type=argparse.FileType(), help='Miranda predictions')
+    parser.add_argument('prediction_output', type=argparse.FileType(), help='Miranda predictions')
     parser.add_argument('output_file', type=argparse.FileType('w'), nargs='?', default=sys.stdout, help='Output file')
 
     args = parser.parse_args()
 
-    known_targets = find_known_targets(args.known_targets)
-    # miranda
-    (predicted_targets, predicted_nontargets) = find_miranda_targets(args.miranda_output, min_score=args.min_score,
-                                                                     max_energy=args.max_energy)
-    (TP, FP, TN, FN, sensitivity, specificity) = compute_stats(known_targets, predicted_targets, predicted_nontargets)
+    known_targets = find_known_targets(args.known_targets, verbose=args.verbose)
+    if args.mode == 'miranda':
+        # miranda
+        (predicted_targets, predicted_nontargets) = find_miranda_targets(args.prediction_output, min_score=args.miranda_min_score,
+                                                                         max_energy=args.miranda_max_energy)
+    elif args.mode == 'rnahybrid':
+        (predicted_targets, predicted_nontargets) = find_rnahybrid_targets(args.prediction_output, max_mfe=args.rnahybrid_max_mfe,
+                                                                           max_p_value=args.rnahybrid_max_p_value)
+    (TP, FP, TN, FN, sensitivity, specificity) = compute_stats(known_targets, predicted_targets, predicted_nontargets, 
+                                                               verbose=args.verbose)
 
     print "Total TP: {} FP: {} TN: {} FN: {} sensitivity: {:.2f} specificity: {:.2f}".format(TP, FP, TN, FN, sensitivity, specificity)
