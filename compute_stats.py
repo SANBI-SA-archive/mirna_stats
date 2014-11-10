@@ -121,6 +121,27 @@ def find_rnahybrid_targets(input_file, max_p_value=0.1, max_mfe=-22.0):
             predicted_nontargets[mirna_name] = targets
     return (predicted_targets, predicted_nontargets)
 
+def find_microtar_targets(input_file):
+    # energy difference is difference between energy of bound and unbound mRNA
+    # negative normalized free energy is calculated from energy difference as per
+    # the equation in doi:10.1186/1471-2105-7-S5-S20 equation 1
+    predicted_targets = dict()
+    predicted_nontargets = dict()
+    for line in input_file:
+        # detect junk in microtar output
+        try:
+            line = line.encode('ascii')
+        except UnicodeDecodeError:
+            continue
+        fields = line.rstrip().split()
+        assert len(fields) == 7
+        mirna_name = fields[0].split()[0]
+        gene_name = fields[2].split('|')[0]
+        energy_diff = float(fields[5])
+        nnfe = float(fields[6])
+        # TODO: compute filter. microtar suggests p-value but doesn't include in output
+    return (predicted_targets, predicted_nontargets)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Parser TP/FP stats')
     parser.add_argument('--verbose', default=False, action="store_true", help="Verbose output")
